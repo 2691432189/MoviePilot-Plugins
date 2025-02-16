@@ -189,22 +189,6 @@ class MediaSyncDelV2(_PluginBase):
                                     {
                                         'component': 'VSwitch',
                                         'props': {
-                                            'model': 'del_source',
-                                            'label': '删除源文件',
-                                        }
-                                    }
-                                ]
-                            },
-                            {
-                                'component': 'VCol',
-                                'props': {
-                                    'cols': 12,
-                                    'md': 3
-                                },
-                                'content': [
-                                    {
-                                        'component': 'VSwitch',
-                                        'props': {
                                             'model': 'del_history',
                                             'label': '删除历史',
                                         }
@@ -800,36 +784,6 @@ class MediaSyncDelV2(_PluginBase):
             # 0、删除转移记录
             self._transferhis.delete(transferhis.id)
 
-            # 删除种子任务
-            if self._del_source:
-                # 1、直接删除源文件
-                if transferhis.src and Path(transferhis.src).suffix in settings.RMT_MEDIAEXT:
-                    # 删除硬链接文件和源文件
-                    if Path(transferhis.dest).exists():
-                        Path(transferhis.dest).unlink(missing_ok=True)
-                        self.__remove_parent_dir(Path(transferhis.dest))
-                    if Path(transferhis.src).exists():
-                        logger.info(f"源文件 {transferhis.src} 开始删除")
-                        Path(transferhis.src).unlink(missing_ok=True)
-                        logger.info(f"源文件 {transferhis.src} 已删除")
-                        self.__remove_parent_dir(Path(transferhis.src))
-
-                    if transferhis.download_hash:
-                        try:
-                            # 2、判断种子是否被删除完
-                            delete_flag, success_flag, handle_torrent_hashs = self.handle_torrent(
-                                type=transferhis.type,
-                                src=transferhis.src,
-                                torrent_hash=transferhis.download_hash)
-                            if not success_flag:
-                                error_cnt += 1
-                            else:
-                                if delete_flag:
-                                    del_torrent_hashs += handle_torrent_hashs
-                                else:
-                                    stop_torrent_hashs += handle_torrent_hashs
-                        except Exception as e:
-                            logger.error("删除种子失败：%s" % str(e))
 
         logger.info(f"同步删除 {msg} 完成！")
 
