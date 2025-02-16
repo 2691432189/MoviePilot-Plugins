@@ -1,5 +1,5 @@
 {
-  "MediaSyncDelV2": {
+  "MediaSyncDelEmt": {
     "name": "EMBY同步删除",
     "description": "同步删除历史记录、源文件，原作者thsrite。",
     "labels": "媒体库，文件整理",
