@@ -33,7 +33,7 @@ class MediaSyncDelV2(_PluginBase):
     # 作者主页
     author_url = "https://github.com/2691432189"
     # 插件配置项ID前缀
-    plugin_config_prefix = "mediasyncdel_"
+    plugin_config_prefix = "mediasyncdelV2_"
     # 加载顺序
     plugin_order = 9
     # 可使用的用户级别
