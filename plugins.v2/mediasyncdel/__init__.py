@@ -61,8 +61,6 @@ class MediaSyncDelV2(_PluginBase):
         self._downloadhis = self._transferchain.downloadhis
         self._storagechain = StorageChain()
 
-        logger.info(f"测试 {self} 初始化")
-
         # 读取配置
         if config:
             self._enabled = config.get("enabled")
@@ -796,6 +794,8 @@ class MediaSyncDelV2(_PluginBase):
                 continue
             image = transferhis.image or image
             year = transferhis.year
+
+            logger.info(f"CSSSSSSSSSSSS {self._transferhis} 开始删除")
 
             # 0、删除转移记录
             self._transferhis.delete(transferhis.id)
