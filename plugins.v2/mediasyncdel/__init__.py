@@ -27,7 +27,7 @@ class MediaSyncDelV2(_PluginBase):
     # 插件图标
     plugin_icon = "mediasyncdel.png"
     # 插件版本
-    plugin_version = "1.9.0"
+    plugin_version = "1.9.2"
     # 插件作者
     plugin_author = "2691432189"
     # 作者主页
