@@ -19,7 +19,7 @@ from app.schemas.types import NotificationType, EventType, MediaType, MediaImage
 from app.utils.system import SystemUtils
 
 
-class MediaSyncDel(_PluginBase):
+class MediaSyncDelV2(_PluginBase):
     # 插件名称
     plugin_name = "EMBY同步删除"
     # 插件描述
