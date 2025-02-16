@@ -21,19 +21,19 @@ from app.utils.system import SystemUtils
 
 class MediaSyncDel(_PluginBase):
     # 插件名称
-    plugin_name = "媒体文件同步删除"
+    plugin_name = "EMBY同步删除"
     # 插件描述
-    plugin_desc = "同步删除历史记录、源文件和下载任务。"
+    plugin_desc = "同步删除历史记录、源文件，原作者thsrite。"
     # 插件图标
     plugin_icon = "mediasyncdel.png"
     # 插件版本
     plugin_version = "1.9.0"
     # 插件作者
-    plugin_author = "thsrite"
+    plugin_author = "2691432189"
     # 作者主页
-    author_url = "https://github.com/thsrite"
+    author_url = "https://github.com/2691432189"
     # 插件配置项ID前缀
-    plugin_config_prefix = "mediasyncdel_"
+    plugin_config_prefix = "mediasyncdelv2_"
     # 加载顺序
     plugin_order = 9
     # 可使用的用户级别
@@ -60,6 +60,8 @@ class MediaSyncDel(_PluginBase):
         self._transferhis = self._transferchain.transferhis
         self._downloadhis = self._transferchain.downloadhis
         self._storagechain = StorageChain()
+
+        logger.info(f"测试 {self} 初始化")
 
         # 读取配置
         if config:
