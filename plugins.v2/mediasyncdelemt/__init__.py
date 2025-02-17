@@ -27,7 +27,7 @@ class MediaSyncDelEmt(_PluginBase):
     # 插件图标
     plugin_icon = "mediasyncdel.png"
     # 插件版本
-    plugin_version = "1.9.3"
+    plugin_version = "1.9.5"
     # 插件作者
     plugin_author = "2691432189"
     # 作者主页
@@ -810,17 +810,34 @@ class MediaSyncDelEmt(_PluginBase):
                         self.__remove_parent_dir(Path(transferhis.src))
 
                     if transferhis.download_hash:
-                        self.eventmanager.send_event(
-                            EventType.DownloadFileDeleted,
-                            {
-                                "src": transferhis.src,
-                                "hash": transferhis.download_hash
-                            }
-                        )
+                        try:
+                            # 2、判断种子是否被删除完
+                            delete_flag, success_flag, handle_torrent_hashs = self.handle_torrent(
+                                type=transferhis.type,
+                                src=transferhis.src,
+                                torrent_hash=transferhis.download_hash)
+                            if not success_flag:
+                                error_cnt += 1
+                            else:
+                                if delete_flag:
+                                    del_torrent_hashs += handle_torrent_hashs
+                                else:
+                                    stop_torrent_hashs += handle_torrent_hashs
+
+                            logger.info(f"通知下载器助手删除文件,src: {transferhis.src},download_hash: {transferhis.download_hash}")
+
+                            self.eventmanager.send_event(
+                                EventType.DownloadFileDeleted,
+                                {
+                                    "src": transferhis.src,
+                                    "hash": transferhis.download_hash
+                                }
+                            )
+                        except Exception as e:
+                            logger.error("删除种子失败：%s" % str(e))
 
             # 0、删除转移记录
             self._transferhis.delete(transferhis.id)
-
 
         logger.info(f"同步删除 {msg} 完成！")
 
@@ -837,6 +854,18 @@ class MediaSyncDelEmt(_PluginBase):
             ) or image
 
             torrent_cnt_msg = ""
+            if del_torrent_hashs:
+                torrent_cnt_msg += f"删除种子{len(set(del_torrent_hashs))}个\n"
+            if stop_torrent_hashs:
+                stop_cnt = 0
+                # 排除已删除
+                for stop_hash in set(stop_torrent_hashs):
+                    if stop_hash not in set(del_torrent_hashs):
+                        stop_cnt += 1
+                if stop_cnt > 0:
+                    torrent_cnt_msg += f"暂停种子{stop_cnt}个\n"
+            if error_cnt:
+                torrent_cnt_msg += f"删种失败{error_cnt}个\n"
             # 发送通知
             self.post_message(
                 mtype=NotificationType.Plugin,
@@ -844,6 +873,7 @@ class MediaSyncDelEmt(_PluginBase):
                 image=backrop_image,
                 text=f"{msg}\n"
                      f"删除记录{len(transfer_history)}个\n"
+                     f"{torrent_cnt_msg}"
                      f"时间 {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))}"
             )
 
