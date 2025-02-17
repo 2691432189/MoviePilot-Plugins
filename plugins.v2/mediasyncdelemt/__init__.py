@@ -27,7 +27,7 @@ class MediaSyncDelEmt(_PluginBase):
     # 插件图标
     plugin_icon = "mediasyncdel.png"
     # 插件版本
-    plugin_version = "1.9.5"
+    plugin_version = "1.9.6"
     # 插件作者
     plugin_author = "2691432189"
     # 作者主页
@@ -809,32 +809,15 @@ class MediaSyncDelEmt(_PluginBase):
                         logger.info(f"源文件 {transferhis.src} 已删除")
                         self.__remove_parent_dir(Path(transferhis.src))
 
-                    if transferhis.download_hash:
-                        try:
-                            # 2、判断种子是否被删除完
-                            delete_flag, success_flag, handle_torrent_hashs = self.handle_torrent(
-                                type=transferhis.type,
-                                src=transferhis.src,
-                                torrent_hash=transferhis.download_hash)
-                            if not success_flag:
-                                error_cnt += 1
-                            else:
-                                if delete_flag:
-                                    del_torrent_hashs += handle_torrent_hashs
-                                else:
-                                    stop_torrent_hashs += handle_torrent_hashs
+                    logger.info(f"通知下载器助手删除文件,src: {transferhis.src},download_hash: {transferhis.download_hash}")
 
-                            logger.info(f"通知下载器助手删除文件,src: {transferhis.src},download_hash: {transferhis.download_hash}")
-
-                            self.eventmanager.send_event(
-                                EventType.DownloadFileDeleted,
-                                {
-                                    "src": transferhis.src,
-                                    "hash": transferhis.download_hash
-                                }
-                            )
-                        except Exception as e:
-                            logger.error("删除种子失败：%s" % str(e))
+                    self.eventmanager.send_event(
+                        EventType.DownloadFileDeleted,
+                        {
+                            "src": transferhis.src,
+                            "hash": transferhis.download_hash
+                        }
+                    )
 
             # 0、删除转移记录
             self._transferhis.delete(transferhis.id)
