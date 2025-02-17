@@ -779,7 +779,28 @@ class MediaSyncDelEmt(_PluginBase):
             image = transferhis.image or image
             year = transferhis.year
 
-            logger.info(f"CSSSSSSSSSSSS {self._transferhis} 开始删除")
+            # 删除种子任务
+            if self._del_source:
+                # 1、直接删除源文件
+                if transferhis.src and Path(transferhis.src).suffix in settings.RMT_MEDIAEXT:
+                    # 删除硬链接文件和源文件
+                    if Path(transferhis.dest).exists():
+                        Path(transferhis.dest).unlink(missing_ok=True)
+                        self.__remove_parent_dir(Path(transferhis.dest))
+                    if Path(transferhis.src).exists():
+                        logger.info(f"源文件 {transferhis.src} 开始删除")
+                        Path(transferhis.src).unlink(missing_ok=True)
+                        logger.info(f"源文件 {transferhis.src} 已删除")
+                        self.__remove_parent_dir(Path(transferhis.src))
+
+                    if transferhis.download_hash:
+                        self.eventmanager.send_event(
+                            EventType.DownloadFileDeleted,
+                            {
+                                "src": transferhis.src,
+                                "hash": transferhis.download_hash
+                            }
+                        )
 
             # 0、删除转移记录
             self._transferhis.delete(transferhis.id)
@@ -800,18 +821,6 @@ class MediaSyncDelEmt(_PluginBase):
             ) or image
 
             torrent_cnt_msg = ""
-            if del_torrent_hashs:
-                torrent_cnt_msg += f"删除种子{len(set(del_torrent_hashs))}个\n"
-            if stop_torrent_hashs:
-                stop_cnt = 0
-                # 排除已删除
-                for stop_hash in set(stop_torrent_hashs):
-                    if stop_hash not in set(del_torrent_hashs):
-                        stop_cnt += 1
-                if stop_cnt > 0:
-                    torrent_cnt_msg += f"暂停种子{stop_cnt}个\n"
-            if error_cnt:
-                torrent_cnt_msg += f"删种失败{error_cnt}个\n"
             # 发送通知
             self.post_message(
                 mtype=NotificationType.Plugin,
@@ -819,7 +828,6 @@ class MediaSyncDelEmt(_PluginBase):
                 image=backrop_image,
                 text=f"{msg}\n"
                      f"删除记录{len(transfer_history)}个\n"
-                     f"{torrent_cnt_msg}"
                      f"时间 {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))}"
             )
 
