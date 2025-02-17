@@ -3,11 +3,12 @@
     "name": "EMBY同步删除",
     "description": "同步删除历史记录、源文件，原作者thsrite。",
     "labels": "媒体库，文件整理",
-    "version": "1.9.2",
+    "version": "1.9.3",
     "icon": "mediasyncdel.png",
     "author": "2691432189",
     "level": 1,
     "history": {
+      "v1.9.3": "测试版本",
       "v1.9.1": "测试版本"
     }
   }
