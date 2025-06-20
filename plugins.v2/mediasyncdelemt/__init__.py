@@ -12,6 +12,8 @@ from app.chain.transfer import TransferChain
 from app.core.config import settings
 from app.core.event import eventmanager, Event
 from app.db.models.transferhistory import TransferHistory
+from app.db.transferhistory_oper import TransferHistoryOper
+from app.db.downloadhistory_oper import DownloadHistoryOper
 from app.helper.downloader import DownloaderHelper
 from app.log import logger
 from app.plugins import _PluginBase
@@ -27,7 +29,7 @@ class MediaSyncDelEmt(_PluginBase):
     # 插件图标
     plugin_icon = "mediasyncdel.png"
     # 插件版本
-    plugin_version = "1.9.8"
+    plugin_version = "1.9.9"
     # 插件作者
     plugin_author = "2691432189"
     # 作者主页
@@ -57,8 +59,8 @@ class MediaSyncDelEmt(_PluginBase):
     def init_plugin(self, config: dict = None):
         self._transferchain = TransferChain()
         self._downloader_helper = DownloaderHelper()
-        self._transferhis = self._transferchain.transferhis
-        self._downloadhis = self._transferchain.downloadhis
+        self._transferhis = TransferHistoryOper()
+        self._downloadhis = DownloadHistoryOper()
         self._storagechain = StorageChain()
 
         # 读取配置
@@ -585,7 +587,7 @@ class MediaSyncDelEmt(_PluginBase):
         event_type = event_data.event
 
         # Emby Webhook event_type = library.deleted
-        if not event_type or str(event_type) != 'library.deleted':
+        if not event_type or str(event_type) not in ['library.deleted', 'ItemDeleted']:
             return
 
         # 媒体类型
@@ -690,8 +692,8 @@ class MediaSyncDelEmt(_PluginBase):
                         season_num=season_num,
                         episode_num=episode_num)
 
-    def __sync_del(self, media_type: str, media_name: str, media_path: str, tmdb_id: int, season_num: str,
-                   episode_num: str):
+    def __sync_del(self, media_type: str, media_name: str, media_path: str,
+                   tmdb_id: int, season_num: str, episode_num: str):
         if not media_type:
             logger.error(f"{media_name} 同步删除失败，未获取到媒体类型，请检查媒体是否刮削")
             return
@@ -732,7 +734,6 @@ class MediaSyncDelEmt(_PluginBase):
         stop_torrent_hashs = []
         error_cnt = 0
         image = 'https://emby.media/notificationicon.png'
-        # TODO 删除方法
         for transferhis in transfer_history:
             title = transferhis.title
             if title not in media_name:
@@ -741,6 +742,9 @@ class MediaSyncDelEmt(_PluginBase):
                 continue
             image = transferhis.image or image
             year = transferhis.year
+
+            # 0、删除转移记录
+            self._transferhis.delete(transferhis.id)
 
             # 删除种子任务
             if self._del_source:
@@ -755,20 +759,15 @@ class MediaSyncDelEmt(_PluginBase):
                         Path(transferhis.src).unlink(missing_ok=True)
                         logger.info(f"源文件 {transferhis.src} 已删除")
                         self.__remove_parent_dir(Path(transferhis.src))
-
-                    if transferhis.download_hash:
-                        logger.info(
-                            f"通知下载器助手删除文件,src: {transferhis.src},download_hash: {transferhis.download_hash}")
-                        self.eventmanager.send_event(
-                            EventType.DownloadFileDeleted,
-                            {
-                                "src": transferhis.src,
-                                "hash": transferhis.download_hash
-                            }
-                        )
-
-            # 0、删除转移记录
-            self._transferhis.delete(transferhis.id)
+                        if transferhis.download_hash:
+                            logger.info(f"通知下载器助手删除文件,src: {transferhis.src},download_hash: {transferhis.download_hash}")
+                            self.eventmanager.send_event(
+                                EventType.DownloadFileDeleted,
+                                {
+                                    "src": transferhis.src,
+                                    "hash": transferhis.download_hash
+                                }
+                            )
 
         logger.info(f"同步删除 {msg} 完成！")
 
